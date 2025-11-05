@@ -45,6 +45,11 @@ import jakarta.validation.Valid;
 @Tag(name="Authentication Management", description = "Endpoints for user authentication and authorization")
 public class AuthController {
 
+    @PostMapping("/test")
+    public ResponseEntity<?> testEndpoint() {
+        return ResponseEntity.ok("Auth controller is working");
+    }
+
 	private UserRepository userRepository;
 	private PasswordEncoder passwordEncoder;
 	private JwtProvider jwtProvider;
@@ -151,10 +156,14 @@ public class AuthController {
 
 	@PostMapping("/signup")
 	public ResponseEntity<AuthResponse> createUserHandler(@Valid @RequestBody User user) throws UserException {
+		  	System.out.println("Received signup request");
 		  	String email = user.getEmail();
 	        String password = user.getPassword();
 	        String fullName=user.getFullName();
 	        String birthDate=user.getBirthDate();
+	        System.out.println("Signup details - Email: " + email + ", Name: " + fullName + ", BirthDate: " + birthDate);
+	        
+	        System.out.println("Received signup request - Email: " + email + ", FullName: " + fullName + ", BirthDate: " + birthDate);
 	        
 	        if (email == null || email.trim().isEmpty()) {
 	            throw new UserException("Email is required");

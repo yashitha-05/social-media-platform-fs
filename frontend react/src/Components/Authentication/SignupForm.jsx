@@ -42,7 +42,7 @@ const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
 const SignupForm = () => {
   const dispatch = useDispatch();
-
+  const [submitError, setSubmitError] = useState(null);
 
   const formik = useFormik({
     initialValues: {
@@ -57,19 +57,37 @@ const SignupForm = () => {
     },
     validationSchema,
     onSubmit: async (values) => {
-      const { day, month, year } = values.dateOfBirth;
-      const dateOfBirth = `${year}-${month}-${day}`;
-      // backend expects `birthDate` field name
-      const payload = { ...values, birthDate: dateOfBirth };
-      delete payload.dateOfBirth;
-
       try {
+        setSubmitError(null);
+        setLocalError(null);
+        
+        const { day, month, year } = values.dateOfBirth;
+        if (!day || !month || !year) {
+          setSubmitError('Please select your date of birth');
+          return;
+        }
+        
+        // Format month and day to be two digits
+        const formattedMonth = month.toString().padStart(2, '0');
+        const formattedDay = day.toString().padStart(2, '0');
+        const dateOfBirth = `${year}-${formattedMonth}-${formattedDay}`;
+        
+        const payload = { 
+          fullName: values.fullName,
+          email: values.email,
+          password: values.password,
+          birthDate: dateOfBirth
+        };
+        
+        console.log('Sending signup request with:', payload);
         await dispatch(registerUser(payload));
-        // success - you may redirect or show success message here
+        console.log('Signup successful');
+        
+        // Clear form after successful signup
+        formik.resetForm();
       } catch (err) {
-        // The registerUser action throws on error; capture it and show to user
-        setLocalError(err.message || "Registration failed");
-        console.error("Registration error:", err);
+        console.error('Signup error:', err);
+        setSubmitError(err.message || 'Failed to sign up. Please try again.');
       }
     },
   });
@@ -191,9 +209,12 @@ const SignupForm = () => {
           {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
             <div className="text-red-500">{formik.errors.dateOfBirth}</div>
           )}
-          {localError && (
-            <Alert severity="error" onClose={() => setLocalError(null)}>
-              {localError}
+          {(localError || submitError) && (
+            <Alert severity="error" onClose={() => {
+              setLocalError(null);
+              setSubmitError(null);
+            }}>
+              {localError || submitError}
             </Alert>
           )}
         </Grid>

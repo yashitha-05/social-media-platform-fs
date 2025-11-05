@@ -101,18 +101,6 @@ const Landing = () => {
             >
               Sign In
             </Button>
-            <Button
-              component={Link}
-              to="/contact"
-              variant="text"
-              sx={{
-                textTransform: 'none',
-                color: '#6b7280',
-                '&:hover': { color: '#e91e63' }
-              }}
-            >
-              Contact Us
-            </Button>
           </motion.div>
         </div>
       </section>

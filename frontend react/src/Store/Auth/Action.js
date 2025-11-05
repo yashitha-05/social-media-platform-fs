@@ -71,20 +71,34 @@ const getUserProfileFailure = (error) => ({
 export const loginUser = (loginData) => async (dispatch) => {
   dispatch(loginRequest());
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/signin`, loginData);
+    console.log('Sending login request to:', `${API_BASE_URL}/auth/signin`);
+    console.log('Login payload:', loginData);
+    
+    const response = await api.post('/auth/signin', loginData, {
+      validateStatus: function (status) {
+        return status < 500; // Resolve only if the status code is less than 500
+      }
+    });
+    
+    console.log('Login response:', response);
     const user = response.data;
-    console.log("login user -: ", user);
-    if (user && user.jwt) {
+    
+    if (response.status === 200 && user && user.jwt) {
       localStorage.setItem("jwt", user.jwt);
       dispatch(loginSuccess(user));
       return user;
     } else {
-      const msg = "Invalid response from server";
+      const msg = response.data?.message || "Invalid response from server";
+      console.error("Login failed:", msg, response.data);
       dispatch(loginFailure(msg));
       throw new Error(msg);
     }
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Login error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
     const errorMessage = error.response?.data?.message || error.message || "An error occurred during login.";
     dispatch(loginFailure(errorMessage));
     throw new Error(errorMessage);
@@ -111,21 +125,41 @@ export const loginWithGoogleAction = (data) => async (dispatch) => {
 export const registerUser = (userData) => async (dispatch) => {
   dispatch(registerRequest());
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/signup`, userData);
+    console.log("Sending registration request:", userData);
+    const response = await api.post('/auth/signup', userData, {
+      validateStatus: function (status) {
+        return true; // Don't throw HTTP errors, let us handle them
+      }
+    });
+    
+    console.log("Registration response:", response);
+    
+    if (response.status !== 200) {
+      const errorMsg = response.data?.error || response.data?.message || 'Registration failed';
+      console.error("Registration error:", errorMsg);
+      dispatch(registerFailure(errorMsg));
+      throw new Error(errorMsg);
+    }
+    
     const user = response.data;
-    console.log("created user - : ", user);
-    if (user && user.jwt) {
-      localStorage.setItem("jwt", user.jwt);
-      dispatch(registerSuccess(user));
-      return user;
-    } else {
-      const msg = "Invalid response from server";
+    if (!user || !user.jwt) {
+      const msg = "Invalid response from server: missing JWT token";
+      console.error("Registration failed:", msg);
       dispatch(registerFailure(msg));
       throw new Error(msg);
     }
+    
+    localStorage.setItem("jwt", user.jwt);
+    dispatch(registerSuccess(user));
+    return user;
   } catch (error) {
-    console.error("Registration error:", error);
-    const errorMessage = error.response?.data?.message || error.message || "An error occurred during registration.";
+    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || "Registration failed. Please try again.";
+    console.error("Registration error:", {
+      message: errorMessage,
+      response: error.response?.data,
+      status: error.response?.status,
+      error: error
+    });
     dispatch(registerFailure(errorMessage));
     throw new Error(errorMessage);
   }

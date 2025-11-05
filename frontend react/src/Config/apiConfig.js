@@ -4,7 +4,9 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: false, // Set to false since we're using token auth
 });
 
 // Attach fresh JWT for every request

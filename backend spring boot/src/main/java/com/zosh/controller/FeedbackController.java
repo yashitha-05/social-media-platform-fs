@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.zosh.model.Feedback;
 
 @RestController
-@RequestMapping("/feedback")
+@RequestMapping("/api/feedback")
 public class FeedbackController {
 
     private final List<Feedback> store = Collections.synchronizedList(new ArrayList<>());
